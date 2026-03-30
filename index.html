@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AquaDesk — Seasons Indoor Swimming Pool</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --cyan:#0EA5E9;--cyan-glow:rgba(14,165,233,0.2);
+  --green:#16A34A;--green-bg:rgba(22,163,74,0.1);
+  --red:#DC2626;--red-bg:rgba(220,38,38,0.1);
+  --amber:#D97706;--amber-bg:rgba(217,119,6,0.1);
+  --purple:#7C3AED;--purple-bg:rgba(124,58,237,0.1);
+  --teal:#0D9488;--teal-bg:rgba(13,148,136,0.1);
+  --r8:8px;--r12:12px;--r16:16px;--r20:20px;
+  --font:'Outfit',sans-serif;--mono:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+/* LIGHT — default */
+[data-theme="light"]{
+  --bg:#F0F9FF;--bg2:#FFFFFF;--bg3:#F8FBFF;--bg4:#E0F2FE;
+  --surf:rgba(14,165,233,0.05);--surf2:rgba(14,165,233,0.09);
+  --border:rgba(14,165,233,0.12);--border2:rgba(14,165,233,0.22);
+  --t1:#0C1A2E;--t2:#2563A8;--t3:#64A0C8;
+  --card-shadow:0 2px 12px rgba(14,165,233,0.08);
+}
+/* DARK */
+[data-theme="dark"]{
+  --bg:#050C18;--bg2:#0A1628;--bg3:#0F1E38;--bg4:#152440;
+  --surf:rgba(255,255,255,0.04);--surf2:rgba(255,255,255,0.08);
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.14);
+  --t1:#E8F4FF;--t2:#7BA8CC;--t3:#3D6080;
+  --card-shadow:0 2px 12px rgba(0,0,0,0.3);
+}
+
+body{font-family:var(--font);font-size:14px;background:var(--bg);color:var(--t1);min-height:100vh;overflow-x:hidden;transition:background .3s,color .3s}
+#pool-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.85}
+.bubbles{position:fixed;inset:0;pointer-events:none;z-index:0}
+/* ensure all app content always sits above canvas */
+#splash,#login-screen,#app{position:relative;z-index:2}
+.bubble{position:absolute;bottom:-60px;border-radius:50%;border:1.5px solid rgba(14,165,233,0.55);background:rgba(14,165,233,0.06);animation:bubbleRise linear infinite;opacity:0}
+@keyframes bubbleRise{0%{transform:translateY(0) scale(1);opacity:0}10%{opacity:.6}85%{opacity:.15}100%{transform:translateY(-105vh) translateX(30px) scale(1.2);opacity:0}}
+
+/* ── SPLASH ── */
+#splash{
+  position:fixed;inset:0;z-index:300;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:linear-gradient(160deg,#0EA5E9 0%,#0369A1 60%,#1E3A5F 100%);
+  transition:opacity .6s var(--ease),transform .6s var(--ease);
+}
+#splash.hide{opacity:0;pointer-events:none;transform:scale(1.08)}
+.splash-icon{font-size:72px;animation:splashBounce 1.2s var(--ease) both}
+.splash-pool{font-size:22px;font-weight:800;color:#fff;margin-top:20px;letter-spacing:-.02em;text-align:center;animation:fadeUp .6s .4s var(--ease) both}
+.splash-sub{font-size:12px;color:rgba(255,255,255,.7);margin-top:6px;letter-spacing:.1em;text-transform:uppercase;animation:fadeUp .6s .6s var(--ease) both}
+.splash-bar{width:120px;height:3px;background:rgba(255,255,255,.2);border-radius:10px;margin-top:32px;overflow:hidden;animation:fadeUp .5s .7s var(--ease) both}
+.splash-progress{height:100%;background:#fff;border-radius:10px;animation:loadBar 1.6s .3s var(--ease) forwards;width:0}
+@keyframes splashBounce{0%{transform:scale(.4) translateY(30px);opacity:0}60%{transform:scale(1.1) translateY(-8px)}100%{transform:scale(1) translateY(0);opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes loadBar{0%{width:0}100%{width:100%}}
+
+/* ── LOGIN ── */
+#login-screen{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;transition:opacity .5s var(--ease),transform .5s var(--ease)}
+#login-screen.hide{opacity:0;pointer-events:none;transform:scale(1.05) translateY(-16px)}
+.login-wrap{width:100%;max-width:420px;position:relative;z-index:1}
+.login-ripple{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(14,165,233,0.1) 0%,transparent 70%);animation:rPulse 3s ease-in-out infinite;pointer-events:none}
+.login-ripple::before,.login-ripple::after{content:'';position:absolute;inset:-30px;border-radius:50%;border:1px solid rgba(14,165,233,0.12);animation:rExpand 3s ease-out infinite}
+.login-ripple::after{animation-delay:1.5s;inset:-55px}
+@keyframes rPulse{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.06)}}
+@keyframes rExpand{0%{opacity:.5;transform:scale(1)}100%{opacity:0;transform:scale(1.5)}}
+.login-logo{text-align:center;margin-bottom:24px;animation:fadeUp .6s var(--ease) both}
+.login-icon{width:72px;height:72px;border-radius:20px;margin:0 auto 12px;background:linear-gradient(135deg,#0EA5E9,#0369A1);display:flex;align-items:center;justify-content:center;font-size:32px;box-shadow:0 8px 32px rgba(14,165,233,0.35);animation:iconPulse 2.5s ease-in-out infinite}
+@keyframes iconPulse{0%,100%{box-shadow:0 8px 32px rgba(14,165,233,0.3)}50%{box-shadow:0 8px 48px rgba(14,165,233,0.5)}}
+.login-pool-name{font-size:18px;font-weight:800;color:var(--t1);letter-spacing:-.02em}
+.login-sub{font-size:10px;color:var(--cyan);font-weight:600;letter-spacing:.1em;text-transform:uppercase;margin-top:4px}
+.login-card{background:var(--bg2);border:.5px solid var(--border2);border-radius:var(--r20);padding:28px 24px;box-shadow:0 24px 64px rgba(14,165,233,0.12),0 0 0 .5px var(--border);animation:fadeUp .5s .15s var(--ease) both;position:relative;overflow:hidden}
+.login-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent)}
+.login-title{font-size:20px;font-weight:700;margin-bottom:3px;color:var(--t1)}
+.login-desc{font-size:13px;color:var(--t3);margin-bottom:22px}
+.lfield{margin-bottom:14px}
+.lfield label{font-size:10px;color:var(--t3);display:block;margin-bottom:5px;letter-spacing:.07em;text-transform:uppercase;font-weight:600}
+.lfield input{width:100%;padding:12px 14px;font-size:14px;border:.5px solid var(--border2);border-radius:var(--r12);background:var(--bg3);color:var(--t1);font-family:var(--font);transition:all .2s}
+.lfield input:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px var(--cyan-glow)}
+.lfield input::placeholder{color:var(--t3)}
+.login-btn{width:100%;padding:13px;font-size:15px;font-weight:700;background:linear-gradient(135deg,#0EA5E9,#0369A1);color:#fff;border:none;border-radius:var(--r12);cursor:pointer;font-family:var(--font);box-shadow:0 4px 20px rgba(14,165,233,0.35);transition:all .2s;margin-top:6px;letter-spacing:.01em}
+.login-btn:hover{transform:translateY(-1px);box-shadow:0 8px 32px rgba(14,165,233,0.45)}
+.login-err{font-size:12px;color:var(--red);text-align:center;margin-top:8px;display:none}
+.login-hint{margin-top:14px;padding:10px 14px;background:var(--surf);border-radius:var(--r8);border:.5px solid var(--border);font-size:11px;color:var(--t3);text-align:center}
+.login-hint strong{color:var(--cyan)}
+
+/* ── MEMBER DETAIL MODAL (TC_010) ── */
+.modal-overlay{position:fixed;inset:0;z-index:150;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .25s}
+.modal-overlay.show{opacity:1;pointer-events:all}
+.modal-box{background:var(--bg2);border-radius:var(--r20);padding:28px;max-width:420px;width:100%;border:.5px solid var(--border2);box-shadow:0 24px 64px rgba(0,0,0,.2);transform:scale(.94) translateY(10px);transition:transform .25s var(--ease)}
+.modal-overlay.show .modal-box{transform:scale(1) translateY(0)}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.modal-title{font-size:16px;font-weight:700;color:var(--t1)}
+.modal-close{width:32px;height:32px;border-radius:var(--r8);background:var(--surf);border:.5px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--t2);transition:all .15s}
+.modal-close:hover{background:var(--surf2)}
+.modal-avatar{width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;margin:0 auto 16px;border:2px solid var(--border2)}
+.modal-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:.5px solid var(--border)}
+.modal-row:last-child{border-bottom:none}
+.modal-lbl{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.modal-val{font-size:13px;font-weight:500;color:var(--t1)}
+
+/* ── APP ── */
+#app{display:none;min-height:100vh;flex-direction:column;position:relative;z-index:1}
+#app.show{display:flex}
+
+/* ── TOPBAR ── */
+.topbar{display:flex;align-items:center;background:var(--bg2);border-bottom:.5px solid var(--border);position:sticky;top:0;z-index:50;backdrop-filter:blur(20px);box-shadow:var(--card-shadow)}
+.brand{display:flex;align-items:center;gap:10px;padding:11px 16px;border-right:.5px solid var(--border);flex-shrink:0}
+.brand-icon{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#0EA5E9,#0369A1);display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 0 16px rgba(14,165,233,0.3);flex-shrink:0}
+.brand-name{font-size:13px;font-weight:800;color:var(--t1);letter-spacing:-.01em;line-height:1.1}
+.brand-pool{font-size:9px;color:var(--cyan);font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.tabs{display:flex;flex:1;overflow-x:auto}.tabs::-webkit-scrollbar{display:none}
+.tab{padding:13px 14px;font-size:13px;font-weight:500;cursor:pointer;color:var(--t3);border:none;background:transparent;border-bottom:2px solid transparent;white-space:nowrap;font-family:var(--font);transition:all .15s}
+.tab.on{color:var(--cyan);border-bottom-color:var(--cyan);font-weight:700}
+.tab:hover:not(.on){color:var(--t2)}
+.topbar-right{display:flex;align-items:center;gap:8px;padding:8px 14px;border-left:.5px solid var(--border);flex-shrink:0;margin-left:auto}
+.theme-btn{width:32px;height:32px;border-radius:var(--r8);background:var(--surf);border:.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;transition:all .15s}
+.theme-btn:hover{background:var(--surf2)}
+.online-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2s infinite;flex-shrink:0}
+.staff-lbl{font-size:12px;color:var(--t3);font-weight:500}
+.logout-btn{padding:6px 12px;font-size:11px;font-weight:600;background:var(--red-bg);color:var(--red);border:.5px solid rgba(220,38,38,.25);border-radius:var(--r8);cursor:pointer;font-family:var(--font);transition:all .15s;white-space:nowrap}
+.logout-btn:hover{background:rgba(220,38,38,.18)}
+
+/* MOBILE HEADER */
+.mobile-header{display:none;align-items:center;justify-content:space-between;padding:11px 16px;background:var(--bg2);border-bottom:.5px solid var(--border);position:sticky;top:0;z-index:50;box-shadow:var(--card-shadow)}
+.mh-brand{display:flex;align-items:center;gap:10px}
+.mh-icon{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#0EA5E9,#0369A1);display:flex;align-items:center;justify-content:center;font-size:17px}
+.mh-title{font-size:14px;font-weight:800;color:var(--t1)}
+.mh-sub{font-size:9px;color:var(--cyan);font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.mh-actions{display:flex;align-items:center;gap:8px}
+.mh-btn{width:34px;height:34px;border-radius:var(--r8);background:var(--surf);border:.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;transition:all .15s}
+
+/* MAIN + PAGES */
+.main{flex:1;padding:16px;max-width:1200px;width:100%;margin:0 auto}
+.page{display:none;animation:pageIn .28s var(--ease) both}
+.page.on{display:block}
+@keyframes pageIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+
+/* KPI */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.kpi{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r16);padding:16px 18px;position:relative;overflow:hidden;transition:all .2s var(--ease);cursor:default;box-shadow:var(--card-shadow)}
+.kpi::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--surf) 0%,transparent 60%);pointer-events:none}
+.kpi:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(14,165,233,0.12)}
+.kpi.accent-blue{border-color:rgba(14,165,233,0.25)}
+.kpi.accent-green{border-color:rgba(22,163,74,0.25)}
+.kpi.accent-amber{border-color:rgba(217,119,6,0.25)}
+.kpi-icon{font-size:20px;margin-bottom:8px}
+.kpi-val{font-size:26px;font-weight:800;letter-spacing:-.03em;line-height:1;font-family:var(--mono)}
+.kpi-lbl{font-size:10px;color:var(--t3);margin-top:6px;text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.kpi-val.blue{color:var(--cyan)}.kpi-val.green{color:var(--green)}.kpi-val.amber{color:var(--amber)}.kpi-val.red{color:var(--red)}
+/* clickable KPI */
+.kpi.clickable{cursor:pointer}
+.kpi.clickable:hover{border-color:var(--cyan);box-shadow:0 6px 20px rgba(14,165,233,0.2)}
+
+/* LAYOUT */
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.45fr);gap:16px;margin-bottom:16px}
+.summary-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+
+/* CARD */
+.card{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r16);padding:18px 20px;margin-bottom:14px;position:relative;overflow:hidden;box-shadow:var(--card-shadow)}
+.card:last-child{margin-bottom:0}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.ct{font-size:14px;font-weight:700;color:var(--t1)}
+.csub{font-size:11px;color:var(--t3);background:var(--surf);padding:3px 10px;border-radius:20px;border:.5px solid var(--border)}
+
+/* FORM */
+.field{margin-bottom:12px}
+.field label{font-size:10px;color:var(--t3);display:block;margin-bottom:5px;letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+.field input,.field select{width:100%;padding:10px 12px;font-size:13px;border:.5px solid var(--border2);border-radius:var(--r8);background:var(--bg3);color:var(--t1);font-family:var(--font);transition:all .2s;appearance:none}
+.field input::placeholder{color:var(--t3)}
+.field input:focus,.field select:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px var(--cyan-glow)}
+.field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' fill='none'%3E%3Cpath d='M1 1l4.5 4.5L10 1' stroke='%2364A0C8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;cursor:pointer}
+.field select option{background:var(--bg3);color:var(--t1)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;font-size:13px;font-weight:600;border-radius:var(--r8);cursor:pointer;border:.5px solid var(--border2);background:var(--bg3);color:var(--t2);font-family:var(--font);width:100%;transition:all .2s}
+.btn:hover{background:var(--surf2);color:var(--t1)}
+.btn-primary{background:linear-gradient(135deg,#0EA5E9,#0369A1);color:#fff;border-color:transparent;box-shadow:0 4px 16px rgba(14,165,233,0.3)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 28px rgba(14,165,233,0.4);color:#fff}
+.btn-sm{width:auto;padding:5px 12px;font-size:11px}
+.btn-red{background:var(--red-bg);color:var(--red);border-color:rgba(220,38,38,.2)}
+.btn-red:hover{background:rgba(220,38,38,.18)}
+.btn-green{background:var(--green-bg);color:var(--green);border-color:rgba(22,163,74,.2)}
+.btn-green:hover{background:rgba(22,163,74,.18)}
+.btn-purple{background:var(--purple-bg);color:var(--purple);border-color:rgba(124,58,237,.2);width:auto;padding:5px 10px;font-size:11px;font-weight:600;border-radius:var(--r8);cursor:pointer;font-family:var(--font);transition:all .15s}
+.btn-purple:hover{background:rgba(124,58,237,.18)}
+
+/* SESSION ITEMS */
+.session-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border:.5px solid var(--border);border-radius:var(--r12);margin-bottom:8px;background:var(--bg3);transition:all .15s;position:relative;overflow:hidden}
+.session-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--cyan);border-radius:2px 0 0 2px}
+.session-item.expired{border-color:rgba(220,38,38,.3);background:rgba(220,38,38,.04)}
+.session-item.expired::before{background:var(--red)}
+.session-item.warning{border-color:rgba(217,119,6,.3);background:rgba(217,119,6,.04)}
+.session-item.warning::before{background:var(--amber)}
+.session-item:hover{border-color:var(--border2)}
+
+/* AVATARS */
+.av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.av.b{background:rgba(14,165,233,.15);color:var(--cyan)}
+.av.g{background:var(--green-bg);color:var(--green)}
+.av.a{background:var(--amber-bg);color:var(--amber)}
+.av.p{background:var(--purple-bg);color:var(--purple)}
+.av.t{background:var(--teal-bg);color:var(--teal)}
+.si-info{flex:1;min-width:0}
+.si-name{font-size:13px;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.si-meta{font-size:11px;color:var(--t3);margin-top:3px}
+
+/* TIMER */
+.timer{font-size:18px;font-weight:600;font-family:var(--mono);min-width:60px;text-align:right;flex-shrink:0;transition:color .3s}
+.timer.ok{color:var(--cyan)}.timer.warn{color:var(--amber)}.timer.over{color:var(--red);animation:tFlash .8s infinite}
+@keyframes tFlash{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* BADGES */
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;flex-shrink:0}
+.badge.active{background:rgba(14,165,233,.12);color:var(--cyan);border:.5px solid rgba(14,165,233,.25)}
+.badge.done{background:var(--green-bg);color:var(--green);border:.5px solid rgba(22,163,74,.25)}
+.badge.member{background:var(--purple-bg);color:var(--purple);border:.5px solid rgba(124,58,237,.25)}
+.badge.coaching{background:var(--amber-bg);color:var(--amber);border:.5px solid rgba(217,119,6,.25)}
+.badge.pending{background:var(--amber-bg);color:var(--amber);border:.5px solid rgba(217,119,6,.25)}
+.badge.paid{background:var(--green-bg);color:var(--green);border:.5px solid rgba(22,163,74,.25)}
+
+/* STICKER */
+.sticker-num{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:var(--bg4);color:var(--t1);font-size:14px;font-weight:700;flex-shrink:0;border:1.5px solid var(--border2);font-family:var(--mono)}
+
+/* ALERTS */
+.alert-strip{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--r8);margin-bottom:8px;font-size:12px;font-weight:600}
+.alert-strip.danger{background:var(--red-bg);color:var(--red);border:.5px solid rgba(220,38,38,.3)}
+.alert-strip.warn{background:var(--amber-bg);color:var(--amber);border:.5px solid rgba(217,119,6,.3)}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dot.red{background:var(--red);box-shadow:0 0 6px var(--red)}.dot.amber{background:var(--amber)}
+
+/* ALARM */
+.alarm-banner{display:none;align-items:center;gap:12px;padding:12px 20px;background:linear-gradient(90deg,#7f1d1d,#991b1b);font-size:13px;font-weight:600;color:#fff;border-bottom:1px solid rgba(255,255,255,.1)}
+.alarm-banner.show{display:flex}
+.alarm-banner button{margin-left:auto;padding:5px 14px;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:var(--r8);font-weight:600;cursor:pointer;font-size:12px;font-family:var(--font);transition:all .15s}
+.alarm-banner button:hover{background:rgba(255,255,255,.28)}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+.tbl th{text-align:left;padding:8px 12px;font-size:10px;font-weight:600;color:var(--t3);border-bottom:.5px solid var(--border);letter-spacing:.07em;text-transform:uppercase}
+.tbl td{padding:10px 12px;border-bottom:.5px solid var(--border);vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--t2)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--surf)}
+.tbl-name{color:var(--t1)!important;font-weight:500;cursor:pointer;text-decoration:underline;text-decoration-color:var(--border2);text-underline-offset:2px}
+.tbl-name:hover{color:var(--cyan)!important}
+
+/* PAY ROW */
+.pay-row{display:flex;align-items:center;gap:12px;padding:11px 14px;border:.5px solid var(--border);border-radius:var(--r8);margin-bottom:6px;background:var(--bg3);transition:all .15s}
+.pay-row:hover{border-color:var(--border2)}
+.pay-amt{font-size:14px;font-weight:700;margin-left:auto;color:var(--t1);font-family:var(--mono);flex-shrink:0}
+
+/* MISC */
+.divider{height:.5px;background:var(--border);margin:12px 0}
+.staff-row{display:flex;align-items:center;gap:12px;padding:11px 14px;border:.5px solid var(--border);border-radius:var(--r12);margin-bottom:8px;background:var(--bg3)}
+.shift-badge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600}
+.morning{background:var(--amber-bg);color:var(--amber);border:.5px solid rgba(217,119,6,.25)}
+.evening{background:var(--purple-bg);color:var(--purple);border:.5px solid rgba(124,58,237,.25)}
+.fullday{background:rgba(14,165,233,.1);color:var(--cyan);border:.5px solid rgba(14,165,233,.2)}
+.empty{text-align:center;padding:36px 0;color:var(--t3);font-size:13px}
+.empty-icon{font-size:28px;margin-bottom:8px;opacity:.5}
+.extend-btns{display:flex;gap:4px;flex-shrink:0}
+.btn-extend{width:auto;padding:4px 9px;font-size:11px;font-weight:600;background:var(--purple-bg);color:var(--purple);border:.5px solid rgba(124,58,237,.2);border-radius:var(--r8);cursor:pointer;font-family:var(--font);transition:all .15s}
+.btn-extend:hover{background:rgba(124,58,237,.18)}
+
+/* BOOKING */
+.booking-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:8px;margin-bottom:12px}
+.slot{padding:10px 6px;text-align:center;border-radius:var(--r8);border:.5px solid var(--border);background:var(--bg3);cursor:pointer;transition:all .2s;font-size:12px;font-weight:500}
+.slot.avail{color:var(--green);border-color:rgba(22,163,74,.25);background:var(--green-bg)}
+.slot.avail:hover{background:rgba(22,163,74,.2);transform:translateY(-2px)}
+.slot.booked{color:var(--t3);background:var(--surf);cursor:not-allowed;opacity:.55}
+.slot.selected{background:var(--cyan);color:#fff;border-color:var(--cyan);box-shadow:0 4px 14px rgba(14,165,233,.35)}
+.slot-time{font-size:11px;font-weight:700;font-family:var(--mono)}
+.slot-status{font-size:10px;margin-top:2px;text-transform:uppercase;letter-spacing:.04em}
+
+/* HISTORY SEARCH */
+.search-bar{display:flex;gap:8px;flex-wrap:wrap}
+.search-wrap{position:relative;flex:1;min-width:160px}
+.search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none}
+.search-input{width:100%;padding:10px 12px 10px 34px;font-size:13px;border:.5px solid var(--border2);border-radius:var(--r8);background:var(--bg3);color:var(--t1);font-family:var(--font);transition:all .2s}
+.search-input:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px var(--cyan-glow)}
+.search-input::placeholder{color:var(--t3)}
+.filter-sel{padding:10px 30px 10px 12px;font-size:13px;border:.5px solid var(--border2);border-radius:var(--r8);background:var(--bg3);color:var(--t1);font-family:var(--font);appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' fill='none'%3E%3Cpath d='M1 1l4.5 4.5L10 1' stroke='%2364A0C8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;cursor:pointer}
+.filter-sel option{background:var(--bg3)}
+
+/* MOBILE NAV */
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:.5px solid var(--border);padding:6px 0 max(8px,env(safe-area-inset-bottom));z-index:50;box-shadow:0 -4px 20px rgba(14,165,233,0.08)}
+.mobile-nav-inner{display:flex;justify-content:space-around}
+.mnav-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 8px;border-radius:var(--r8);cursor:pointer;transition:all .15s;flex:1;border:none;background:transparent;font-family:var(--font)}
+.mnav-icon{font-size:20px;transition:transform .2s var(--ease)}
+.mnav-label{font-size:10px;color:var(--t3);font-weight:500;transition:color .15s}
+.mnav-item.on .mnav-icon{transform:translateY(-2px)}
+.mnav-item.on .mnav-label{color:var(--cyan)}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.pulse{animation:pulse 1s infinite}
+
+/* ── FLATPICKR CUSTOM THEME ── */
+.flatpickr-calendar{background:var(--bg2)!important;border:.5px solid var(--border2)!important;border-radius:var(--r16)!important;box-shadow:0 16px 48px rgba(14,165,233,0.15)!important;font-family:var(--font)!important;}
+.flatpickr-months{background:linear-gradient(135deg,#0EA5E9,#0369A1)!important;border-radius:var(--r16) var(--r16) 0 0!important;padding:4px 0!important;}
+.flatpickr-month{color:#fff!important;}
+.flatpickr-current-month{color:#fff!important;font-family:var(--font)!important;font-weight:700!important;}
+.flatpickr-current-month .flatpickr-monthDropdown-months{background:transparent!important;color:#fff!important;font-weight:700!important;}
+.flatpickr-prev-month,.flatpickr-next-month{color:#fff!important;fill:#fff!important;}
+.flatpickr-prev-month:hover,.flatpickr-next-month:hover{color:rgba(255,255,255,.7)!important;}
+.flatpickr-weekday{color:var(--t3)!important;font-family:var(--font)!important;font-size:11px!important;font-weight:600!important;}
+.flatpickr-day{color:var(--t1)!important;font-family:var(--font)!important;border-radius:var(--r8)!important;}
+.flatpickr-day:hover{background:var(--surf2)!important;border-color:var(--border)!important;}
+.flatpickr-day.selected,.flatpickr-day.selected:hover{background:#0EA5E9!important;border-color:#0EA5E9!important;color:#fff!important;box-shadow:0 4px 12px rgba(14,165,233,0.4)!important;}
+.flatpickr-day.today{border-color:rgba(14,165,233,0.4)!important;font-weight:700!important;}
+.flatpickr-day.flatpickr-disabled{color:var(--t3)!important;opacity:.4!important;}
+.numInputWrapper span.arrowUp:after{border-bottom-color:var(--cyan)!important;}
+.numInputWrapper span.arrowDown:after{border-top-color:var(--cyan)!important;}
+.flatpickr-time input{color:var(--t1)!important;background:var(--bg3)!important;}
+.flatpickr-time .flatpickr-time-separator{color:var(--t2)!important;}
+.flatpickr-innerContainer{padding:8px!important;}
+
+/* PENDING PANEL */
+.pending-panel{display:none;margin-bottom:16px}
+.pending-panel.show{display:block}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .kpi-row{grid-template-columns:repeat(2,1fr);gap:10px}
+  .two{grid-template-columns:1fr}
+  .summary-row{grid-template-columns:repeat(2,1fr)}
+  .tabs,.topbar{display:none}
+  .mobile-nav,.mobile-header{display:flex}
+  .main{padding:12px;padding-bottom:86px}
+  .kpi-val{font-size:22px}
+  .card{padding:14px 16px}
+  .session-item{flex-wrap:wrap;gap:8px}
+  .extend-btns{order:10;width:100%;justify-content:flex-start;margin-top:4px}
+  .row3{grid-template-columns:1fr 1fr}
+}
+@media(max-width:420px){
+  .row2,.row3{grid-template-columns:1fr}
+  .booking-grid{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+</head>
+<body>
+
+<canvas id="pool-canvas"></canvas>
+<div class="bubbles" id="bubbles"></div>
+
+<!-- ══ SPLASH (TC_001) ══ -->
+<div id="splash">
+  <div class="splash-icon">🏊</div>
+  <div class="splash-pool">Seasons Indoor Swimming Pool</div>
+  <div class="splash-sub">AquaDesk · Staff Portal</div>
+  <div class="splash-bar"><div class="splash-progress"></div></div>
+</div>
+
+<!-- ══ LOGIN ══ -->
+<div id="login-screen" style="display:none">
+  <div class="login-wrap">
+    <div class="login-ripple"></div>
+    <div class="login-logo">
+      <div class="login-icon">🏊</div>
+      <div class="login-pool-name">Seasons Indoor Swimming Pool</div>
+      <div class="login-sub">AquaDesk · Staff Portal</div>
+    </div>
+    <div class="login-card">
+      <div class="login-title">Welcome back 👋</div>
+      <div class="login-desc">Sign in to manage today's sessions</div>
+      <div class="lfield"><label>Email</label><input type="email" id="l-email" placeholder="staff@seasons.in" autocomplete="username"></div>
+      <div class="lfield"><label>Password</label><input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <button class="login-btn" onclick="doLogin()">Sign in to AquaDesk →</button>
+      <div class="login-err" id="l-err">Incorrect credentials. Please try again.</div>
+      <div class="login-hint">Demo: <strong>staff@seasons.in</strong> / <strong>seasons123</strong></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MEMBER DETAIL MODAL (TC_010) ══ -->
+<div class="modal-overlay" id="member-modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="modal-title">Member Details</div>
+      <div class="modal-close" onclick="closeModal()">✕</div>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- ══ APP ══ -->
+<div id="app">
+  <div class="alarm-banner" id="alarm-banner">
+    <div class="dot red pulse"></div>
+    <span id="alarm-msg">Time is up!</span>
+    <button onclick="stopAlarm()">Dismiss</button>
+  </div>
+
+  <!-- DESKTOP TOPBAR -->
+  <div class="topbar">
+    <div class="brand" onclick="location.reload()" style="cursor:pointer" title="Reload AquaDesk">
+      <div class="brand-icon">🏊</div>
+      <div><div class="brand-name">AquaDesk</div><div class="brand-pool">Seasons Pool</div></div>
+    </div>
+    <div class="tabs">
+      <button class="tab on" onclick="nav('checkin',this)">Check-in</button>
+      <button class="tab" onclick="nav('members',this)">Members</button>
+      <button class="tab" onclick="nav('payments',this)">Payments</button>
+      <button class="tab" onclick="nav('coaching',this)">Coaching</button>
+      <button class="tab" onclick="nav('booking',this)">Online Booking</button>
+      <button class="tab" onclick="nav('history',this)">History</button>
+      <button class="tab" onclick="nav('staff',this)">Staff</button>
+      <button class="tab" onclick="nav('reports',this)">Reports</button>
+    </div>
+    <div class="topbar-right">
+      <div class="theme-btn" onclick="toggleTheme()" id="theme-icon">🌙</div>
+      <div class="online-dot"></div>
+      <span class="staff-lbl" id="logged-user">Staff</span>
+      <button class="logout-btn" onclick="doLogout()">Sign out</button>
+    </div>
+  </div>
+
+  <!-- MOBILE HEADER -->
+  <div class="mobile-header">
+    <div class="mh-brand" onclick="location.reload()" style="cursor:pointer" title="Reload">
+      <div class="mh-icon">🏊</div>
+      <div><div class="mh-title">AquaDesk</div><div class="mh-sub">Seasons Pool</div></div>
+    </div>
+    <div class="mh-actions">
+      <div class="mh-btn" onclick="toggleTheme()" id="theme-icon-m">🌙</div>
+      <div class="mh-btn" onclick="doLogout()" title="Sign out">🚪</div>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- CHECK-IN -->
+    <div class="page on" id="pg-checkin">
+      <div class="kpi-row">
+        <div class="kpi accent-blue"><div class="kpi-icon">🏊</div><div class="kpi-val blue" id="k-active">0</div><div class="kpi-lbl">Active in pool</div></div>
+        <div class="kpi"><div class="kpi-icon">📋</div><div class="kpi-val" id="k-today">0</div><div class="kpi-lbl">Check-ins today</div></div>
+        <div class="kpi accent-green"><div class="kpi-icon">💰</div><div class="kpi-val green" id="k-rev">₹0</div><div class="kpi-lbl">Today's revenue</div></div>
+        <!-- TC_004: clickable pending KPI -->
+        <div class="kpi accent-amber clickable" onclick="togglePendingPanel()">
+          <div class="kpi-icon">⏳</div><div class="kpi-val amber" id="k-pend">0</div>
+          <div class="kpi-lbl">Pending · tap to view</div>
+        </div>
+      </div>
+      <!-- TC_004: Pending panel -->
+      <div class="pending-panel" id="pending-panel">
+        <div class="card" style="border-color:rgba(217,119,6,.3)">
+          <div class="ch"><span class="ct" style="color:var(--amber)">Pending Payments</span><button class="btn btn-sm" style="width:auto" onclick="togglePendingPanel()">Hide</button></div>
+          <div id="pending-zone"><div class="empty">No pending payments.</div></div>
+        </div>
+      </div>
+      <div class="two">
+        <div>
+          <div class="card">
+            <div class="ch"><span class="ct">New check-in</span></div>
+            <div class="field"><label>Customer name</label><input id="f-name" placeholder="e.g. Ravi Kumar" type="text"></div>
+            <div class="row2">
+              <div class="field">
+                <label>Phone <span style="color:var(--t3);font-size:10px;font-weight:400">(10 digits)</span></label>
+                <input id="f-phone" placeholder="9XXXXXXXXX" type="tel" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'').slice(0,10)">
+              </div>
+              <div class="field">
+                <label>Cap sticker <span style="color:var(--t3);font-size:10px;font-weight:400">(max 999)</span></label>
+                <input id="f-sticker" placeholder="e.g. 9" type="number" min="1" max="999" oninput="if(parseInt(this.value)>999)this.value=999;if(this.value.length>3)this.value=this.value.slice(0,3)" style="font-family:var(--mono);font-size:16px;font-weight:700;text-align:center">
+              </div>
+            </div>
+            <!-- TC_002: Gender field -->
+            <div class="row2">
+              <div class="field"><label>Gender</label>
+                <select id="f-gender"><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select>
+              </div>
+              <div class="field"><label>Type</label>
+                <select id="f-type"><option value="walkin">Walk-in</option><option value="member">Member</option><option value="coaching">Coaching</option></select>
+              </div>
+            </div>
+            <div class="row2">
+              <div class="field"><label>Duration</label>
+                <select id="f-dur">
+                  <option value="2">2 min — TEST</option>
+                  <option value="30">30 min — ₹100</option>
+                  <option value="60" selected>1 hr — ₹150</option>
+                  <option value="90">1.5 hr — ₹200</option>
+                  <option value="120">2 hr — ₹250</option>
+                </select>
+              </div>
+              <div class="field"><label>Payment</label>
+                <select id="f-pay"><option>Cash</option><option>UPI</option><option>Card</option><option value="Pending">Collect later</option></select>
+              </div>
+            </div>
+            <div class="field"><label>Lane</label>
+              <select id="f-lane"><option>Any</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select>
+            </div>
+            <button class="btn btn-primary" onclick="checkIn()">Start session + timer</button>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="height:100%">
+            <div class="ch"><span class="ct">Live sessions</span><span class="csub" id="live-lbl">0 active</span></div>
+            <div id="alerts-zone"></div>
+            <div id="sessions-zone"><div class="empty"><div class="empty-icon">🏊</div>No active sessions.</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card" id="hist-card" style="display:none">
+        <div class="ch"><span class="ct">Completed today</span><span class="csub" id="hist-lbl">0 sessions</span></div>
+        <div id="hist-zone"></div>
+      </div>
+    </div>
+
+    <!-- MEMBERS -->
+    <div class="page" id="pg-members">
+      <div class="two">
+        <div class="card">
+          <div class="ch"><span class="ct">Register member</span></div>
+          <div class="field"><label>Full name</label><input id="m-name" type="text" placeholder="Name"></div>
+          <div class="row2">
+            <div class="field">
+              <label>Phone <span style="color:var(--t3);font-size:10px;font-weight:400">(10 digits)</span></label>
+              <input id="m-phone" type="tel" placeholder="9XXXXXXXXX" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'').slice(0,10)">
+            </div>
+            <!-- TC_005: Gender on members -->
+            <div class="field"><label>Gender</label>
+              <select id="m-gender"><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select>
+            </div>
+          </div>
+          <div class="row2">
+            <!-- TC_005: DOB with Flatpickr -->
+            <div class="field"><label>Date of birth</label><input id="m-dob" type="text" placeholder="Select date" readonly class="fp-date"></div>
+            <div class="field"><label>Start date</label><input id="m-date" type="text" placeholder="Select date" readonly class="fp-date"></div>
+          </div>
+          <!-- Special offer plans: pay X months, get Y months total -->
+          <div class="field"><label>Membership plan</label>
+            <select id="m-plan" onchange="updatePlanPreview()">
+              <option value="1 Month|1000|1">1 Month — ₹1,000</option>
+              <option value="2 Months|1800|2">2 Months — ₹1,800</option>
+              <option value="3 Months + 2 Free|3000|5">3 Months — ₹3,000 (get 5 months! 🎁)</option>
+              <option value="6 Months + 1 Free|5500|7">6 Months — ₹5,500 (get 7 months! 🎁)</option>
+              <option value="12 Months + 3 Free|10000|15">12 Months — ₹10,000 (get 15 months! 🎁)</option>
+            </select>
+          </div>
+          <!-- Plan preview badge -->
+          <div id="plan-preview" style="margin-bottom:12px;padding:10px 14px;background:rgba(22,163,74,0.08);border:.5px solid rgba(22,163,74,0.25);border-radius:var(--r8);font-size:12px;color:var(--green);display:none">
+            <strong id="plan-preview-text"></strong>
+          </div>
+          <div class="field"><label>Payment mode</label>
+            <select id="m-paymode"><option>Cash</option><option>UPI</option><option>Card</option><option value="Pending">Collect later</option></select>
+          </div>
+          <div class="field"><label>Notes</label><input id="m-notes" type="text" placeholder="Beginner, no diving…"></div>
+          <button class="btn btn-primary" onclick="addMember()">Register member</button>
+        </div>
+        <div class="card">
+          <div class="ch"><span class="ct">Members</span><span class="csub" id="mem-count">0 total</span></div>
+          <div id="members-zone"><div class="empty"><div class="empty-icon">👥</div>No members yet.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAYMENTS -->
+    <div class="page" id="pg-payments">
+      <div class="summary-row">
+        <div class="kpi accent-green"><div class="kpi-icon">💵</div><div class="kpi-val green" id="p-today">₹0</div><div class="kpi-lbl">Collected today</div></div>
+        <div class="kpi"><div class="kpi-icon">🔢</div><div class="kpi-val" id="p-count">0</div><div class="kpi-lbl">Transactions</div></div>
+        <!-- TC_011: clickable pending tab -->
+        <div class="kpi accent-amber clickable" onclick="showPendingTab()">
+          <div class="kpi-icon">⏳</div><div class="kpi-val amber" id="p-pending">0</div><div class="kpi-lbl">Pending · tap to view</div>
+        </div>
+      </div>
+      <!-- TC_011 pending list -->
+      <div class="card" id="pay-pending-card" style="display:none;border-color:rgba(217,119,6,.3);margin-bottom:14px">
+        <div class="ch"><span class="ct" style="color:var(--amber)">Pending Dues</span><button class="btn btn-sm" style="width:auto" onclick="hidePendingTab()">Hide</button></div>
+        <div id="pay-pending-zone"></div>
+      </div>
+      <!-- TC_012: no emojis in transactions -->
+      <div class="card">
+        <div class="ch"><span class="ct">All transactions</span>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-sm" id="filter-all-btn" onclick="filterPayments('all')" style="width:auto;color:var(--cyan);border-color:var(--cyan)">All</button>
+            <button class="btn btn-sm" id="filter-paid-btn" onclick="filterPayments('paid')" style="width:auto">Paid</button>
+            <button class="btn btn-sm" id="filter-pending-btn" onclick="filterPayments('pending')" style="width:auto">Pending</button>
+          </div>
+        </div>
+        <div id="pay-zone"><div class="empty">No transactions yet.</div></div>
+      </div>
+    </div>
+
+    <!-- COACHING -->
+    <div class="page" id="pg-coaching">
+      <div class="two">
+        <div class="card">
+          <div class="ch"><span class="ct">Schedule session</span></div>
+          <div class="field"><label>Student name</label><input id="co-stud" type="text" placeholder="Name"></div>
+          <div class="field"><label>Coach</label>
+            <select id="co-coach"><option>Arjun (Head coach)</option><option>Neha (Assistant)</option><option>Suresh (Trainer)</option></select>
+          </div>
+          <div class="row2">
+            <div class="field"><label>Date &amp; time</label><input id="co-dt" type="text" placeholder="Select date &amp; time" readonly class="fp-datetime"></div>
+            <div class="field"><label>Duration &amp; fee</label>
+              <select id="co-dur"><option value="45|400">45 min — ₹400</option><option value="60|500">1 hr — ₹500</option><option value="90|700">1.5 hr — ₹700</option></select>
+            </div>
+          </div>
+          <div class="field"><label>Focus area</label><input id="co-focus" type="text" placeholder="Freestyle, breathing…"></div>
+          <div class="field"><label>Payment</label>
+            <select id="co-pay"><option>Cash</option><option>UPI</option><option>Card</option><option value="Pending">Collect later</option></select>
+          </div>
+          <button class="btn btn-primary" onclick="addCoaching()">Schedule session</button>
+        </div>
+        <div class="card">
+          <div class="ch"><span class="ct">Upcoming sessions</span><span class="csub" id="co-count">0 scheduled</span></div>
+          <div id="coaching-zone"><div class="empty"><div class="empty-icon">🏅</div>No sessions scheduled.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ONLINE BOOKING -->
+    <div class="page" id="pg-booking">
+      <div class="two">
+        <div class="card">
+          <div class="ch"><span class="ct">Book a slot</span></div>
+          <div class="field"><label>Customer name</label><input id="bk-name" type="text" placeholder="Name"></div>
+          <div class="field"><label>Phone <span style="color:var(--t3);font-size:10px;font-weight:400">(10 digits)</span></label><input id="bk-phone" type="tel" placeholder="9XXXXXXXXX" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'').slice(0,10)"></div>
+          <div class="field"><label>Date</label><input id="bk-date" type="text" placeholder="Select date" readonly class="fp-date" onchange="renderSlots()"></div>
+          <div class="field"><label>Type</label>
+            <select id="bk-type"><option value="walkin">Walk-in</option><option value="member">Member</option><option value="coaching">Coaching</option></select>
+          </div>
+          <div style="margin-bottom:12px">
+            <div class="field" style="margin-bottom:6px"><label>Select time slot</label></div>
+            <div class="booking-grid" id="slot-grid"></div>
+            <div style="display:flex;gap:12px;font-size:11px;color:var(--t3);margin-top:6px;flex-wrap:wrap">
+              <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:var(--green-bg);display:inline-block"></span>Available</span>
+              <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:var(--cyan);display:inline-block"></span>Selected</span>
+              <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:var(--surf);border:.5px solid var(--border);display:inline-block"></span>Booked</span>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="confirmBooking()">Confirm booking</button>
+        </div>
+        <div class="card">
+          <div class="ch"><span class="ct">Bookings</span><span class="csub" id="bk-count">0 today</span></div>
+          <div id="bookings-zone"><div class="empty"><div class="empty-icon">📆</div>No bookings yet.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY + SEARCH -->
+    <div class="page" id="pg-history">
+      <div class="card" style="margin-bottom:16px;padding:14px 16px">
+        <div class="search-bar">
+          <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input class="search-input" id="h-search" type="text" placeholder="Search by name or phone…" oninput="filterHistory()">
+          </div>
+          <!-- TC_014: fixed type filter -->
+          <select class="filter-sel" id="h-filter" onchange="filterHistory()">
+            <option value="all">All types</option>
+            <option value="walkin">Walk-in</option>
+            <option value="member">Member</option>
+            <option value="coaching">Coaching</option>
+          </select>
+          <select class="filter-sel" id="h-date-filter" onchange="loadFullHistory()">
+            <option value="today">Today</option>
+            <option value="week">This week</option>
+            <option value="all">All time</option>
+          </select>
+          <button class="btn btn-sm" style="width:auto" onclick="clearHistorySearch()">Clear</button>
+        </div>
+      </div>
+      <div class="summary-row">
+        <div class="kpi accent-blue"><div class="kpi-icon" style="font-size:18px;font-family:var(--mono);color:var(--cyan)">#</div><div class="kpi-val blue" id="hs-count">0</div><div class="kpi-lbl">Sessions found</div></div>
+        <div class="kpi accent-green"><div class="kpi-icon" style="font-size:18px;font-weight:700;color:var(--green)">₹</div><div class="kpi-val green" id="hs-rev">₹0</div><div class="kpi-lbl">Revenue in results</div></div>
+        <div class="kpi"><div class="kpi-icon" style="font-size:18px;color:var(--t3)">min</div><div class="kpi-val" id="hs-mins">0</div><div class="kpi-lbl">Total minutes</div></div>
+      </div>
+      <div class="card">
+        <div class="ch"><span class="ct">Session history</span><span class="csub" id="hs-label">—</span></div>
+        <div id="history-zone"><div class="empty"><div class="empty-icon">🕐</div>Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- STAFF -->
+    <div class="page" id="pg-staff">
+      <div class="two">
+        <div class="card">
+          <div class="ch"><span class="ct">Add staff member</span></div>
+          <div class="field"><label>Name</label><input id="st-name" type="text" placeholder="Name"></div>
+          <div class="row2">
+            <div class="field"><label>Role</label><select id="st-role"><option>Receptionist</option><option>Lifeguard</option><option>Cleaner</option><option>Manager</option></select></div>
+            <div class="field"><label>Shift</label><select id="st-shift"><option value="morning">Morning (6am–2pm)</option><option value="evening">Evening (2pm–10pm)</option><option value="fullday">Full day</option></select></div>
+          </div>
+          <div class="field"><label>Phone</label><input id="st-phone" type="tel" placeholder="Phone"></div>
+          <button class="btn btn-primary" onclick="addStaff()">Add staff member</button>
+        </div>
+        <div class="card">
+          <div class="ch"><span class="ct">Staff on duty</span><span class="csub" id="staff-count">0 staff</span></div>
+          <div id="staff-zone"><div class="empty"><div class="empty-icon">👷</div>No staff added yet.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="page" id="pg-reports">
+      <div class="kpi-row">
+        <div class="kpi accent-blue"><div class="kpi-icon">📋</div><div class="kpi-val blue" id="r-checkins">0</div><div class="kpi-lbl">Check-ins today</div></div>
+        <div class="kpi accent-green"><div class="kpi-icon">💰</div><div class="kpi-val green" id="r-rev">₹0</div><div class="kpi-lbl">Revenue collected</div></div>
+        <div class="kpi"><div class="kpi-icon">👥</div><div class="kpi-val" id="r-members">0</div><div class="kpi-lbl">Active members</div></div>
+        <div class="kpi accent-amber"><div class="kpi-icon">🏅</div><div class="kpi-val amber" id="r-coaching">0</div><div class="kpi-lbl">Coaching sessions</div></div>
+      </div>
+      <div class="two">
+        <div class="card">
+          <div class="ch"><span class="ct">Revenue breakdown</span></div>
+          <!-- TC_013 + TC_015: fixed revenue calc + pending shown -->
+          <div id="rev-breakdown"><div class="empty">No data yet.</div></div>
+        </div>
+        <div class="card">
+          <div class="ch"><span class="ct">Today's session log</span></div>
+          <div id="full-log"><div class="empty">No sessions yet.</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+
+  <!-- MOBILE BOTTOM NAV -->
+  <nav class="mobile-nav">
+    <div class="mobile-nav-inner">
+      <button class="mnav-item on" onclick="mNav('checkin',this)"><span class="mnav-icon">🏠</span><span class="mnav-label">Check-in</span></button>
+      <button class="mnav-item" onclick="mNav('members',this)"><span class="mnav-icon">👥</span><span class="mnav-label">Members</span></button>
+      <button class="mnav-item" onclick="mNav('payments',this)"><span class="mnav-icon">💳</span><span class="mnav-label">Payments</span></button>
+      <button class="mnav-item" onclick="mNav('booking',this)"><span class="mnav-icon">📆</span><span class="mnav-label">Booking</span></button>
+      <button class="mnav-item" onclick="mNav('history',this)"><span class="mnav-icon">🔍</span><span class="mnav-label">History</span></button>
+      <button class="mnav-item" onclick="mNav('reports',this)"><span class="mnav-icon">📊</span><span class="mnav-label">Reports</span></button>
+    </div>
+  </nav>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ══ SUPABASE — PASTE YOUR KEYS HERE ══ */
+const _sb = supabase.createClient(
+  'https://bvzwxeusipddacgewiwz.supabase.co',
+  'sb_publishable_ctL6urtd9W7qS8ZsPus9rw_8wzadu2k'
+);
+
+/* ══ POOL CANVAS ══ */
+(function(){
+  const cv=document.getElementById('pool-canvas');
+  const ctx=cv.getContext('2d');
+  let W,H,t=0;
+  function resize(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight}
+  resize();window.addEventListener('resize',resize);
+  const dk=()=>document.documentElement.getAttribute('data-theme')==='dark';
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    [[.76,.007,.011,28,.07],[.81,.011,.017,18,.055],[.86,.016,.023,12,.04],[.72,.005,.007,36,.045]].forEach(([y,f,sp,a,al])=>{
+      ctx.beginPath();ctx.moveTo(0,H);
+      for(let x=0;x<=W;x+=4)ctx.lineTo(x,H*y+Math.sin(x*f+t*sp*60)*a+Math.cos(x*f*.7+t*sp*40)*a*.5);
+      ctx.lineTo(W,H);ctx.closePath();
+      ctx.fillStyle=dk()?`rgba(14,165,233,${al})`:`rgba(2,132,199,${al*2.2})`;ctx.fill();
+    });
+    t+=.016;requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ══ BUBBLES ══ */
+(function(){
+  const c=document.getElementById('bubbles');
+  for(let i=0;i<20;i++){
+    const b=document.createElement('div');b.className='bubble';
+    const sz=6+Math.random()*16;
+    b.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;animation-duration:${9+Math.random()*16}s;animation-delay:${Math.random()*12}s`;
+    c.appendChild(b);
+  }
+})();
+
+/* ══ SPLASH (TC_001) — shows 2s then reveals login ══ */
+window.addEventListener('load',()=>{
+  setTimeout(()=>{
+    document.getElementById('splash').classList.add('hide');
+    document.getElementById('login-screen').style.display='flex';
+    /* Remember last page on reload — only force checkin on fresh login */
+    const lastPage=localStorage.getItem('aq_page')||'checkin';
+    const saved=localStorage.getItem('aq_user');
+    if(saved&&!_dataLoaded){
+      currentUser=saved;_dataLoaded=true;
+      document.getElementById('logged-user').textContent=saved.charAt(0).toUpperCase()+saved.slice(1);
+      document.getElementById('login-screen').classList.add('hide');
+      document.getElementById('app').classList.add('show');
+      /* restore last visited page */
+      const tab=document.querySelector(`.tab[onclick*="${lastPage}"]`);
+      nav(lastPage, tab||null);
+      loadTodayData();
+    }
+  },2000);
+});
+
+/* ══ AUDIO ALARM (mobile-compatible) ══
+   Why: speechSynthesis doesn't work reliably on mobile/background.
+   Web Audio API works on all devices as long as user has interacted with the page (which they have — they logged in). */
+let _audioCtx=null;
+function getAudio(){if(!_audioCtx)_audioCtx=new(window.AudioContext||window.webkitAudioContext)();return _audioCtx;}
+function playBeep(freq=520,dur=0.6,vol=0.7){
+  try{
+    const ctx=getAudio();
+    const osc=ctx.createOscillator();
+    const gain=ctx.createGain();
+    osc.connect(gain);gain.connect(ctx.destination);
+    osc.frequency.value=freq;osc.type='sine';
+    gain.gain.setValueAtTime(vol,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);
+    osc.start(ctx.currentTime);osc.stop(ctx.currentTime+dur);
+  }catch(e){console.warn('Audio:',e);}
+}
+function playAlarmSound(){
+  /* Three ascending beeps — sounds like a pool buzzer */
+  playBeep(440,0.3,0.8);
+  setTimeout(()=>playBeep(520,0.3,0.8),350);
+  setTimeout(()=>playBeep(660,0.5,0.9),700);
+}
+let _alarmInterval=null;
+function startAlarmLoop(){
+  playAlarmSound();
+  _alarmInterval=setInterval(playAlarmSound,3500);
+}
+function stopAlarmSound(){
+  if(_alarmInterval){clearInterval(_alarmInterval);_alarmInterval=null;}
+}
+
+/* ══ AUTH ══ */
+const USERS={'staff@seasons.in':'seasons123','manager@seasons.in':'manager123','admin@seasons.in':'admin123'};
+let currentUser='';
+let _dataLoaded=false;
+
+function doLogin(){
+  const email=document.getElementById('l-email').value.trim().toLowerCase();
+  const pass=document.getElementById('l-pass').value;
+  const err=document.getElementById('l-err');
+  if(USERS[email]===pass){
+    err.style.display='none';
+    currentUser=email.split('@')[0];
+    localStorage.setItem('aq_user',currentUser);
+    document.getElementById('logged-user').textContent=currentUser.charAt(0).toUpperCase()+currentUser.slice(1);
+    document.getElementById('login-screen').classList.add('hide');
+    document.getElementById('app').classList.add('show');
+    /* Fresh login always lands on check-in */
+    localStorage.setItem('aq_page','checkin');
+    goToCheckin();
+    if(!_dataLoaded){_dataLoaded=true;loadTodayData();}
+  } else {
+    err.style.display='block';
+    document.getElementById('l-pass').value='';
+    document.getElementById('l-pass').focus();
+  }
+}
+function doLogout(){
+  localStorage.removeItem('aq_user');
+  _dataLoaded=false;
+  stopAlarm();
+  document.getElementById('login-screen').classList.remove('hide');
+  document.getElementById('app').classList.remove('show');
+  document.getElementById('l-email').value='';
+  document.getElementById('l-pass').value='';
+}
+function goToCheckin(){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.mnav-item').forEach(t=>t.classList.remove('on'));
+  document.getElementById('pg-checkin').classList.add('on');
+  const tab=document.querySelector('.tab[onclick*="checkin"]');if(tab)tab.classList.add('on');
+  const mnav=document.querySelector('.mnav-item[onclick*="checkin"]');if(mnav)mnav.classList.add('on');
+}
+
+/* ══ THEME ══ */
+let _dark=false;/* default light */
+function toggleTheme(){
+  _dark=!_dark;
+  document.documentElement.setAttribute('data-theme',_dark?'dark':'light');
+  const ico=_dark?'☀️':'🌙';
+  document.getElementById('theme-icon').textContent=ico;
+  document.getElementById('theme-icon-m').textContent=ico;
+}
+
+/* ══ NAV ══ */
+function nav(pg,el){
+  localStorage.setItem('aq_page',pg);
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.mnav-item').forEach(t=>t.classList.remove('on'));
+  document.getElementById('pg-'+pg).classList.add('on');
+  if(el)el.classList.add('on');
+  const m=document.querySelector(`.mnav-item[onclick*="${pg}"]`);if(m)m.classList.add('on');
+  if(pg==='payments'){renderPayments();renderPendingZone();}
+  if(pg==='reports')renderReports();
+  if(pg==='booking'){renderSlots();renderBookings();}
+  if(pg==='history')loadFullHistory();
+}
+function mNav(pg,el){
+  localStorage.setItem('aq_page',pg);
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.mnav-item').forEach(t=>t.classList.remove('on'));
+  document.getElementById('pg-'+pg).classList.add('on');
+  el.classList.add('on');
+  const d=document.querySelector(`.tab[onclick*="${pg}"]`);if(d)d.classList.add('on');
+  if(pg==='payments'){renderPayments();renderPendingZone();}
+  if(pg==='reports')renderReports();
+  if(pg==='booking'){renderSlots();renderBookings();}
+  if(pg==='history')loadFullHistory();
+}
+
+/* ══ DATA ══ */
+let S=[],M=[],P=[],C=[],ST=[],H=[],BK=[];
+let totRev=0,totToday=0,pendCt=0;
+const DUR_PRICE={2:0,30:100,60:150,90:200,120:250};
+const AV_COLS=['b','g','a','p','t'];
+function ini(n){return(n||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();}
+function avc(n){return AV_COLS[(n||'A').charCodeAt(0)%5];}
+function fmtT(ms){const a=Math.abs(ms),m=Math.floor(a/60000),s=Math.floor((a%60000)/1000);return(ms<0?'-':'')+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
+function fmtTime(d){return new Date(d).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});}
+function fmtDT(d){return new Date(d).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});}
+function rupee(n){return '₹'+Math.round(n).toLocaleString('en-IN');}
+
+/* ══ LOAD DATA ══ */
+async function loadTodayData(){
+  S=[];H=[];M=[];P=[];C=[];ST=[];BK=[];
+  totRev=0;totToday=0;pendCt=0;
+  const today=new Date().toISOString().split('T')[0];
+  const[{data:aS},{data:dS},{data:pays},{data:mems},{data:coach},{data:staff},{data:bks}]=await Promise.all([
+    _sb.from('sessions').select('*').eq('status','active').gte('start_time',today),
+    _sb.from('sessions').select('*').eq('status','done').gte('start_time',today),
+    _sb.from('payments').select('*').gte('created_at',today),
+    _sb.from('members').select('*'),
+    _sb.from('coaching').select('*'),
+    _sb.from('staff').select('*'),
+    _sb.from('bookings').select('*').gte('created_at',today),
+  ]);
+  (aS||[]).forEach(s=>{S.push({id:s.id,name:s.name,phone:s.phone||'',sticker:s.sticker||'',gender:s.gender||'',type:s.type,dur:s.duration,pay:s.payment_mode,lane:s.lane||'Any',price:s.price,start:new Date(s.start_time).getTime(),end:new Date(s.end_time).getTime(),status:'active'});totToday++;});
+  (dS||[]).forEach(s=>{H.push({id:s.id,name:s.name,dur:s.duration,price:s.price,pay:s.payment_mode,start:new Date(s.start_time).getTime(),status:'done'});totToday++;});
+  (pays||[]).forEach(p=>{P.push({id:p.id,name:p.customer_name,type:p.type,amount:p.amount,method:p.method,phone:p.phone||'',time:new Date(p.created_at).getTime(),status:p.status});if(p.status==='paid')totRev+=p.amount;else pendCt++;});
+  (mems||[]).forEach(m=>M.push({id:m.id,name:m.name,phone:m.phone||'',gender:m.gender||'',dob:m.dob||'',plan:m.plan,amount:m.amount,date:m.start_date,notes:m.notes||'',paymode:m.paymode||'Cash',paystatus:m.paystatus||'paid'}));
+  (coach||[]).forEach(c=>C.push({id:c.id,stud:c.student,coach:c.coach,dt:c.scheduled_at,dur:c.duration,fee:c.fee,focus:c.focus||'',pay:c.payment}));
+  (staff||[]).forEach(s=>ST.push({id:s.id,name:s.name,role:s.role,shift:s.shift,phone:s.phone||''}));
+  (bks||[]).forEach(b=>BK.push({id:b.id,name:b.name,phone:b.phone||'',date:b.date,slot:b.slot,type:b.type,status:b.status}));
+  updateKPIs();renderSessions();renderHistory();renderMembers();renderCoaching();renderStaff();renderPayments();renderBookings();renderSlots();
+}
+
+/* ══ CHECK-IN ══ */
+function checkIn(){
+  const name=document.getElementById('f-name').value.trim();
+  const phone=document.getElementById('f-phone').value.trim();
+  const sticker=document.getElementById('f-sticker').value.trim();
+  const gender=document.getElementById('f-gender').value;
+  const type=document.getElementById('f-type').value;
+  const dur=parseInt(document.getElementById('f-dur').value);
+  const pay=document.getElementById('f-pay').value;
+  const lane=document.getElementById('f-lane').value;
+  if(!name){document.getElementById('f-name').focus();return;}
+  if(phone && phone.length!==10){alert('Phone number must be exactly 10 digits.');document.getElementById('f-phone').focus();return;}
+  const price=DUR_PRICE[dur];
+  const now=Date.now();
+  _sb.from('sessions').insert({
+    name,phone,sticker,gender,type,duration:dur,payment_mode:pay,lane,price,
+    start_time:new Date(now).toISOString(),
+    end_time:new Date(now+dur*60000).toISOString(),
+    status:'active'
+  }).select().single().then(({data,error})=>{
+    if(error){console.error('Session save:',error);return;}
+    S.push({id:data.id,name,phone,sticker,gender,type,dur,pay,lane,price,start:now,end:now+dur*60000,status:'active'});
+    totToday++;
+    logPayment(name,'Session',price,pay,phone);
+    ['f-name','f-phone','f-sticker'].forEach(id=>document.getElementById(id).value='');
+    updateKPIs();renderSessions();
+  });
+}
+
+function endSession(id){
+  const i=S.findIndex(s=>s.id===id);if(i<0)return;
+  const s=S[i];s.status='done';H.push(s);S.splice(i,1);
+  alreadyAlarmed.delete(id);
+  if(![...alreadyAlarmed].some(aid=>S.find(x=>x.id===aid)))stopAlarm();
+  updateKPIs();renderSessions();renderHistory();
+  _sb.from('sessions').update({status:'done'}).eq('id',id).then(({error})=>{if(error)console.error(error);});
+}
+
+function logPayment(name,type,amount,method,phone=''){
+  /* Only update local counters — loadTodayData rebuilds from Supabase on refresh */
+  if(method!=='Pending'){totRev+=amount;}else{pendCt++;}
+  P.push({id:Date.now()+'',name,type,amount,method,phone,time:Date.now(),status:method==='Pending'?'pending':'paid'});
+  _sb.from('payments').insert({customer_name:name,type,amount,method,phone,status:method==='Pending'?'pending':'paid'})
+    .then(({error})=>{if(error)console.error(error);});
+  updateKPIs();
+}
+
+function updateKPIs(){
+  document.getElementById('k-active').textContent=S.length;
+  document.getElementById('k-today').textContent=totToday;
+  document.getElementById('k-rev').textContent=rupee(totRev);
+  document.getElementById('k-pend').textContent=pendCt;
+  document.getElementById('p-today').textContent=rupee(totRev);
+  document.getElementById('p-count').textContent=P.length;
+  document.getElementById('p-pending').textContent=pendCt;
+}
+
+function renderSessions(){
+  const zone=document.getElementById('sessions-zone');
+  const alerts=document.getElementById('alerts-zone');
+  document.getElementById('live-lbl').textContent=S.length+' active';
+  if(!S.length){zone.innerHTML='<div class="empty"><div class="empty-icon">🏊</div>No active sessions.</div>';alerts.innerHTML='';return;}
+  let ah='',sh='';
+  S.forEach(s=>{
+    const rem=s.end-Date.now();const mins=Math.ceil(rem/60000);
+    let tc='ok',cls='active';
+    if(rem<=0){tc='over';cls='expired';ah+=`<div class="alert-strip danger"><div class="dot red pulse"></div>${s.sticker?`<b style="font-family:var(--mono)">#${s.sticker}</b>`:''} <b>${s.name}</b> — time is up</div>`;}
+    else if(rem<5*60000){tc='warn';cls='warning';ah+=`<div class="alert-strip warn"><div class="dot amber"></div>${s.sticker?`<b>#${s.sticker}</b>`:''} <b>${s.name}</b> — ${mins} min left</div>`;}
+    const tL=s.type==='member'?'<span class="badge member">Member</span>':s.type==='coaching'?'<span class="badge coaching">Coaching</span>':'<span class="badge active">Walk-in</span>';
+    sh+=`<div class="session-item ${cls}" id="si-${s.id}">
+      ${s.sticker?`<div class="sticker-num">${s.sticker}</div>`:`<div class="av ${avc(s.name)}">${ini(s.name)}</div>`}
+      <div class="si-info">
+        <div class="si-name">${s.name}${s.sticker?` <span style="font-size:11px;color:var(--t3);font-weight:400">Cap #${s.sticker}</span>`:''}${s.lane!=='Any'?` <span style="color:var(--t3);font-weight:400">· Lane ${s.lane}</span>`:''}</div>
+        <div class="si-meta">In at ${fmtTime(s.start)} · ${s.dur} min · ${rupee(s.price)} · ${s.pay}${s.gender?' · '+s.gender:''}</div>
+      </div>
+      ${tL}
+      <div class="timer ${tc}" id="tm-${s.id}">${fmtT(rem)}</div>
+      <div class="extend-btns">
+        <button class="btn-extend" onclick="extendSession('${s.id}',2)">+2m</button>
+        <button class="btn-extend" onclick="extendSession('${s.id}',5)">+5m</button>
+        <button class="btn-extend" onclick="extendSession('${s.id}',10)">+10m</button>
+      </div>
+      <button class="btn btn-sm btn-green" onclick="endSession('${s.id}')">Done</button>
+    </div>`;
+  });
+  alerts.innerHTML=ah;zone.innerHTML=sh;
+}
+
+function renderHistory(){
+  const zone=document.getElementById('hist-zone');const card=document.getElementById('hist-card');
+  document.getElementById('hist-lbl').textContent=H.length+' sessions';
+  if(!H.length){card.style.display='none';return;}
+  card.style.display='block';
+  zone.innerHTML=H.map(s=>`<div class="session-item">
+    <div class="av ${avc(s.name)}">${ini(s.name)}</div>
+    <div class="si-info"><div class="si-name">${s.name}</div><div class="si-meta">${s.dur} min · ${rupee(s.price)} · ${s.pay}</div></div>
+    <span class="badge done">Done</span>
+    <span style="font-size:12px;color:var(--t3);font-family:var(--mono)">${fmtTime(s.start)}</span>
+  </div>`).join('');
+}
+
+/* TC_004: pending panel */
+function togglePendingPanel(){
+  const p=document.getElementById('pending-panel');
+  p.classList.toggle('show');
+  if(p.classList.contains('show'))renderPendingZone();
+}
+function renderPendingZone(){
+  const pending=P.filter(p=>p.status==='pending');
+  const z=document.getElementById('pending-zone');
+  if(!pending.length){z.innerHTML='<div class="empty">No pending payments.</div>';return;}
+  z.innerHTML=pending.map(p=>`<div class="pay-row">
+    <div class="av ${avc(p.name)}" style="width:32px;height:32px;font-size:11px">${ini(p.name)}</div>
+    <div><div style="font-size:13px;font-weight:600;color:var(--t1)">${p.name}</div>
+    <div style="font-size:11px;color:var(--t3)">${p.phone||'No phone'} · ${p.type}</div></div>
+    <span class="badge pending">Pending</span>
+    <div class="pay-amt" style="color:var(--amber)">${rupee(p.amount)}</div>
+  </div>`).join('');
+}
+
+/* ══ MEMBERS ══ */
+function addMember(){
+  const name=document.getElementById('m-name').value.trim();
+  const phone=document.getElementById('m-phone').value.trim();
+  const gender=document.getElementById('m-gender').value;
+  const dobEl=document.getElementById('m-dob');
+  const dateEl=document.getElementById('m-date');
+  const dob=dobEl._flatpickr?dobEl._flatpickr.input.value:dobEl.value;
+  const planVal=document.getElementById('m-plan').value;
+  const date=dateEl._flatpickr?dateEl._flatpickr.input.value:dateEl.value;
+  const paymode=document.getElementById('m-paymode').value;
+  const notes=document.getElementById('m-notes').value.trim();
+  if(!name)return;
+  /* plan format: "Label|price|totalMonths" */
+  const parts=planVal.split('|');
+  const plan=parts[0];
+  const amt=parseInt(parts[1]);
+  const totalMonths=parseInt(parts[2]);
+  const paystatus=paymode==='Pending'?'pending':'paid';
+  M.push({id:Date.now()+'',name,phone,gender,dob,plan,amount:amt,totalMonths,date,notes,paymode,paystatus});
+  logPayment(name,'Membership — '+plan,amt,paymode,phone);
+  ['m-name','m-phone','m-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('plan-preview').style.display='none';
+  renderMembers();updateKPIs();
+  _sb.from('members').insert({name,phone,gender,dob,plan,amount:amt,total_months:totalMonths,start_date:date,notes,paymode,paystatus})
+    .then(({error})=>{if(error)console.error('Member:',error);});
+}
+
+/* TC_009: delete from Supabase */
+function removeMember(id){
+  M=M.filter(m=>m.id!==id);
+  renderMembers();
+  _sb.from('members').delete().eq('id',id).then(({error})=>{if(error)console.error('Delete member:',error);});
+}
+
+/* Plan preview — shows offer details when plan is selected */
+function updatePlanPreview(){
+  const val=document.getElementById('m-plan').value;
+  const parts=val.split('|');
+  const plan=parts[0];const amt=parseInt(parts[1]);const months=parseInt(parts[2]);
+  const preview=document.getElementById('plan-preview');
+  const text=document.getElementById('plan-preview-text');
+  const paidMonths=plan.match(/^(\d+)/)?.[1]||months;
+  const freeMonths=months-paidMonths;
+  if(freeMonths>0){
+    text.textContent=`Pay for ${paidMonths} month${paidMonths>1?'s':''}, get ${freeMonths} month${freeMonths>1?'s':''} FREE — ${months} months total for ${rupee(amt)}`;
+    preview.style.display='block';
+  } else {
+    text.textContent=`${months} month${months>1?'s':''} — ${rupee(amt)}`;
+    preview.style.display='block';
+  }
+}
+/* TC_007: extend membership with offer pricing */
+function extendMembership(id){
+  const m=M.find(x=>x.id===id);if(!m)return;
+  const choice=prompt('Extend membership:\n1 → 1 Month (₹1,000)\n2 → 2 Months (₹1,800)\n3 → 3 Months + 2 FREE = 5 months (₹3,000)\n6 → 6 Months + 1 FREE = 7 months (₹5,500)\n12 → 12 Months + 3 FREE = 15 months (₹10,000)\n\nType number of paid months:');
+  if(!choice)return;
+  const n=parseInt(choice);if(isNaN(n)||n<1)return;
+  const offerMap={1:{cost:1000,total:1},2:{cost:1800,total:2},3:{cost:3000,total:5},6:{cost:5500,total:7},12:{cost:10000,total:15}};
+  const offer=offerMap[n]||{cost:n*1000,total:n};
+  const freeMonths=offer.total-n;
+  const label=freeMonths>0?`+${n}M (+${freeMonths}M FREE, ${offer.total}M total)`:'+'+n+'M';
+  const newPlan=m.plan+' → Extended '+label;
+  m.plan=newPlan;
+  renderMembers();
+  logPayment(m.name,'Membership Extension '+label,offer.cost,'Cash',m.phone);
+  _sb.from('members').update({plan:newPlan}).eq('id',id).then(({error})=>{if(error)console.error(error);});
+}
+
+/* TC_010: member detail modal */
+function showMemberDetail(id){
+  const m=M.find(x=>x.id===id);if(!m)return;
+  const bod=document.getElementById('modal-body');
+  const av=`<div class="modal-avatar av ${avc(m.name)}" style="width:60px;height:60px;font-size:22px">${ini(m.name)}</div>`;
+  const psBadge=m.paystatus==='paid'?'<span class="badge paid">Payment Completed</span>':'<span class="badge pending">Payment Pending</span>';
+  bod.innerHTML=`${av}
+    <div class="modal-row"><span class="modal-lbl">Name</span><span class="modal-val">${m.name}</span></div>
+    <div class="modal-row"><span class="modal-lbl">Phone</span><span class="modal-val" style="font-family:var(--mono)">${m.phone||'—'}</span></div>
+    <div class="modal-row"><span class="modal-lbl">Gender</span><span class="modal-val">${m.gender||'—'}</span></div>
+    <div class="modal-row"><span class="modal-lbl">Date of birth</span><span class="modal-val">${m.dob||'—'}</span></div>
+    <div class="modal-row"><span class="modal-lbl">Plan</span><span class="modal-val">${m.plan}</span></div>
+    <div class="modal-row"><span class="modal-lbl">Start date</span><span class="modal-val">${m.date||'—'}</span></div>
+    <div class="modal-row"><span class="modal-lbl">Amount</span><span class="modal-val" style="font-family:var(--mono)">${rupee(m.amount||0)}</span></div>
+    <div class="modal-row"><span class="modal-lbl">Payment</span><span class="modal-val">${psBadge}</span></div>
+    ${m.notes?`<div class="modal-row"><span class="modal-lbl">Notes</span><span class="modal-val" style="white-space:normal">${m.notes}</span></div>`:''}`;
+  document.getElementById('member-modal').classList.add('show');
+}
+function closeModal(){document.getElementById('member-modal').classList.remove('show');}
+
+function renderMembers(){
+  const z=document.getElementById('members-zone');
+  document.getElementById('mem-count').textContent=M.length+' total';
+  if(!M.length){z.innerHTML='<div class="empty"><div class="empty-icon">👥</div>No members yet.</div>';return;}
+  z.innerHTML=`<table class="tbl">
+    <tr><th style="width:26%">Name</th><th style="width:16%">Plan</th><th style="width:12%">Gender</th><th style="width:16%">Phone</th><th style="width:13%">Payment</th><th style="width:17%"></th></tr>
+    ${M.map(m=>{
+      const ps=m.paystatus==='paid'?'<span class="badge paid" style="font-size:10px">Paid</span>':'<span class="badge pending" style="font-size:10px">Pending</span>';
+      return `<tr>
+        <td><div style="display:flex;align-items:center;gap:8px">
+          <div class="av ${avc(m.name)}" style="width:26px;height:26px;font-size:10px">${ini(m.name)}</div>
+          <span class="tbl-name" onclick="showMemberDetail('${m.id}')">${m.name}</span>
+        </div></td>
+        <td><span class="badge member" style="font-size:10px;white-space:nowrap">${m.plan}</span></td>
+        <td style="color:var(--t2)">${m.gender||'—'}</td>
+        <td style="color:var(--t3);font-family:var(--mono);font-size:12px">${m.phone||'—'}</td>
+        <td>${ps}</td>
+        <td><div style="display:flex;gap:4px;align-items:center">
+          <button class="btn-purple" onclick="extendMembership('${m.id}')" title="Extend membership">+M</button>
+          <button class="btn btn-sm btn-red" style="padding:5px 10px" onclick="removeMember('${m.id}')">Remove</button>
+        </div></td>
+      </tr>`;
+    }).join('')}</table>`;
+}
+
+/* ══ PAYMENTS (TC_011, TC_012) ══ */
+let _payFilter='all';
+function filterPayments(f){
+  _payFilter=f;
+  ['all','paid','pending'].forEach(x=>{
+    const b=document.getElementById('filter-'+x+'-btn');
+    if(b){b.style.color=x===f?'var(--cyan)':'';b.style.borderColor=x===f?'var(--cyan)':'';}
+  });
+  renderPayments();
+}
+function showPendingTab(){
+  document.getElementById('pay-pending-card').style.display='block';
+  renderPendingZone2();
+}
+function hidePendingTab(){document.getElementById('pay-pending-card').style.display='none';}
+function renderPendingZone2(){
+  const z=document.getElementById('pay-pending-zone');
+  const pending=P.filter(p=>p.status==='pending');
+  if(!pending.length){z.innerHTML='<div class="empty">No pending payments.</div>';return;}
+  z.innerHTML=pending.map(p=>`<div class="pay-row">
+    <div class="av ${avc(p.name)}" style="width:32px;height:32px;font-size:11px">${ini(p.name)}</div>
+    <div><div style="font-size:13px;font-weight:600;color:var(--t1)">${p.name}</div>
+    <div style="font-size:11px;color:var(--t3)">${p.phone||'No phone'} · ${p.type}</div></div>
+    <span class="badge pending">Pending</span>
+    <div class="pay-amt" style="color:var(--amber)">${rupee(p.amount)}</div>
+  </div>`).join('');
+}
+function renderPayments(){
+  const z=document.getElementById('pay-zone');
+  updateKPIs();
+  let list=_payFilter==='all'?P:P.filter(p=>p.status===_payFilter);
+  if(!list.length){z.innerHTML='<div class="empty">No transactions.</div>';return;}
+  /* TC_012: no emojis */
+  z.innerHTML=[...list].reverse().map(p=>`<div class="pay-row">
+    <div class="av ${avc(p.name)}" style="width:32px;height:32px;font-size:11px">${ini(p.name)}</div>
+    <div><div style="font-size:13px;font-weight:600;color:var(--t1)">${p.name}</div>
+    <div style="font-size:11px;color:var(--t3)">${p.type} · ${fmtTime(p.time)}${p.phone?' · '+p.phone:''}</div></div>
+    ${p.status==='pending'?'<span class="badge pending">Pending</span>':'<span class="badge paid">'+p.method+'</span>'}
+    <div class="pay-amt">${rupee(p.amount)}</div>
+  </div>`).join('');
+}
+
+/* ══ COACHING (TC_016) ══ */
+function addCoaching(){
+  const stud=document.getElementById('co-stud').value.trim();
+  const coach=document.getElementById('co-coach').value;
+  const codtEl=document.getElementById('co-dt');
+  const dt=codtEl._flatpickr?codtEl._flatpickr.input.value:codtEl.value;
+  const [dur,fee]=document.getElementById('co-dur').value.split('|');
+  const focus=document.getElementById('co-focus').value.trim();
+  const pay=document.getElementById('co-pay').value;
+  if(!stud)return;
+  C.push({id:Date.now()+'',stud,coach,dt,dur:parseInt(dur),fee:parseInt(fee),focus,pay});
+  logPayment(stud,'Coaching ('+coach+')',parseInt(fee),pay);
+  ['co-stud','co-focus'].forEach(id=>document.getElementById(id).value='');
+  renderCoaching();updateKPIs();
+  _sb.from('coaching').insert({student:stud,coach,scheduled_at:dt,duration:parseInt(dur),fee:parseInt(fee),focus,payment:pay})
+    .then(({error})=>{if(error)console.error(error);});
+}
+/* TC_016: actually delete from Supabase */
+function cancelCoaching(id){
+  C=C.filter(c=>c.id!==id);
+  renderCoaching();
+  _sb.from('coaching').delete().eq('id',id).then(({error})=>{if(error)console.error('Delete coaching:',error);});
+}
+function renderCoaching(){
+  const z=document.getElementById('coaching-zone');
+  document.getElementById('co-count').textContent=C.length+' scheduled';
+  if(!C.length){z.innerHTML='<div class="empty"><div class="empty-icon">🏅</div>No sessions scheduled.</div>';return;}
+  z.innerHTML=C.map(c=>`<div class="session-item">
+    <div class="av a">${ini(c.stud)}</div>
+    <div class="si-info"><div class="si-name">${c.stud} <span style="font-size:11px;color:var(--t3);font-weight:400">with ${c.coach}</span></div>
+    <div class="si-meta">${c.dt?fmtDT(c.dt):'—'} · ${c.dur} min · ${rupee(c.fee)}${c.focus?' · '+c.focus:''}</div></div>
+    <span class="badge coaching">Coaching</span>
+    <button class="btn btn-sm btn-red" onclick="cancelCoaching('${c.id}')">Cancel</button>
+  </div>`).join('');
+}
+
+/* ══ BOOKING ══ */
+let selectedSlot='';
+const SLOTS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00'];
+function renderSlots(){
+  const bkEl=document.getElementById('bk-date');
+  const date=bkEl._flatpickr?bkEl._flatpickr.input.value:bkEl.value;
+  if(!date){document.getElementById('slot-grid').innerHTML='<div style="font-size:13px;color:var(--t3);padding:8px 0">Select a date to see available slots.</div>';return;}
+  const grid=document.getElementById('slot-grid');
+  const bookedSlots=BK.filter(b=>b.date===date).map(b=>b.slot);
+  grid.innerHTML=SLOTS.map(t=>{
+    const booked=bookedSlots.includes(t);const sel=selectedSlot===t&&!booked;
+    const cls=booked?'booked':sel?'selected':'avail';
+    return `<div class="slot ${cls}" onclick="selectSlot('${t}',${booked})"><div class="slot-time">${t}</div><div class="slot-status">${booked?'Booked':sel?'Selected':'Open'}</div></div>`;
+  }).join('');
+}
+function selectSlot(t,booked){if(booked)return;selectedSlot=t;renderSlots();}
+function confirmBooking(){
+  const name=document.getElementById('bk-name').value.trim();
+  const phone=document.getElementById('bk-phone').value.trim();
+  const bkEl=document.getElementById('bk-date');
+  const date=bkEl._flatpickr?bkEl._flatpickr.input.value:bkEl.value;
+  const type=document.getElementById('bk-type').value;
+  if(!name||!date||!selectedSlot){alert('Please fill in name, date, and select a slot.');return;}
+  BK.push({id:Date.now()+'',name,phone,date,slot:selectedSlot,type,status:'confirmed'});
+  _sb.from('bookings').insert({name,phone,date,slot:selectedSlot,type,status:'confirmed'}).then(({error})=>{if(error)console.error(error);});
+  ['bk-name','bk-phone'].forEach(id=>document.getElementById(id).value='');
+  selectedSlot='';renderSlots();renderBookings();
+}
+function cancelBooking(id){BK=BK.filter(b=>b.id!==id);renderSlots();renderBookings();}
+function renderBookings(){
+  const z=document.getElementById('bookings-zone');
+  const bkEl=document.getElementById('bk-date');
+  const today=bkEl._flatpickr?bkEl._flatpickr.input.value:new Date().toISOString().split('T')[0];
+  document.getElementById('bk-count').textContent=BK.filter(b=>b.date===today).length+' today';
+  if(!BK.length){z.innerHTML='<div class="empty"><div class="empty-icon">📆</div>No bookings yet.</div>';return;}
+  z.innerHTML=[...BK].sort((a,b)=>a.date.localeCompare(b.date)||a.slot.localeCompare(b.slot)).map(b=>`<div class="session-item">
+    <div class="av ${avc(b.name)}">${ini(b.name)}</div>
+    <div class="si-info"><div class="si-name">${b.name}</div><div class="si-meta">${b.date} · ${b.slot} · ${b.type}${b.phone?' · '+b.phone:''}</div></div>
+    <span class="badge active">Confirmed</span>
+    <button class="btn btn-sm btn-red" onclick="cancelBooking('${b.id}')">Cancel</button>
+  </div>`).join('');
+}
+
+/* ══ HISTORY + SEARCH (TC_013, TC_014) ══ */
+let allHistorySessions=[];
+async function loadFullHistory(){
+  const dateFilter=document.getElementById('h-date-filter')?.value||'today';
+  let query=_sb.from('sessions').select('*').order('start_time',{ascending:false});
+  const now=new Date();
+  if(dateFilter==='today')query=query.gte('start_time',now.toISOString().split('T')[0]);
+  else if(dateFilter==='week'){const w=new Date(now);w.setDate(now.getDate()-7);query=query.gte('start_time',w.toISOString());}
+  const{data,error}=await query;
+  if(error){console.error(error);return;}
+  allHistorySessions=data||[];
+  filterHistory();
+}
+function filterHistory(){
+  const search=(document.getElementById('h-search')?.value||'').toLowerCase().trim();
+  /* TC_014: fixed — match exact type value */
+  const type=document.getElementById('h-filter')?.value||'all';
+  const results=allHistorySessions.filter(s=>{
+    const ms=!search||(s.name||'').toLowerCase().includes(search)||(s.phone||'').includes(search);
+    /* TC_014: walkin stored as 'walkin', member as 'member', coaching as 'coaching' */
+    const mt=type==='all'||s.type===type;
+    return ms&&mt;
+  });
+  const totalRev=results.reduce((a,s)=>a+(s.price||0),0);
+  const totalMins=results.reduce((a,s)=>a+(s.duration||0),0);
+  document.getElementById('hs-count').textContent=results.length;
+  document.getElementById('hs-rev').textContent=rupee(totalRev);
+  document.getElementById('hs-mins').textContent=totalMins;
+  document.getElementById('hs-label').textContent=results.length+' sessions';
+  const z=document.getElementById('history-zone');
+  if(!results.length){z.innerHTML='<div class="empty"><div class="empty-icon">🔍</div>No sessions match your search.</div>';return;}
+  z.innerHTML=results.map(s=>{
+    const tL=s.type==='member'?'<span class="badge member">Member</span>':s.type==='coaching'?'<span class="badge coaching">Coaching</span>':'<span class="badge active">Walk-in</span>';
+    const stL=s.status==='active'?'<span class="badge active">Live</span>':'<span class="badge done">Done</span>';
+    const date=new Date(s.start_time);
+    return `<div class="pay-row">
+      <div class="av ${avc(s.name||'')}" style="width:36px;height:36px">${ini(s.name||'')}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;color:var(--t1)">${s.name||'—'}</div>
+        <div style="font-size:11px;color:var(--t3)">${s.phone||'No phone'} · ${s.duration||0} min · ${s.payment_mode||'—'}${s.sticker?' · Cap #'+s.sticker:''}${s.gender?' · '+s.gender:''}</div>
+      </div>
+      ${tL}${stL}
+      <div style="text-align:right;flex-shrink:0">
+        <div class="pay-amt">${rupee(s.price||0)}</div>
+        <div style="font-size:10px;color:var(--t3);margin-top:2px;font-family:var(--mono)">${date.toLocaleDateString('en-IN',{day:'2-digit',month:'short'})} ${date.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function clearHistorySearch(){
+  document.getElementById('h-search').value='';
+  document.getElementById('h-filter').value='all';
+  document.getElementById('h-date-filter').value='today';
+  filterHistory();
+}
+
+/* ══ STAFF ══ */
+function addStaff(){
+  const name=document.getElementById('st-name').value.trim();
+  const role=document.getElementById('st-role').value;
+  const shift=document.getElementById('st-shift').value;
+  const phone=document.getElementById('st-phone').value.trim();
+  if(!name)return;
+  ST.push({id:Date.now()+'',name,role,shift,phone});
+  ['st-name','st-phone'].forEach(id=>document.getElementById(id).value='');
+  renderStaff();
+  _sb.from('staff').insert({name,role,shift,phone}).then(({error})=>{if(error)console.error(error);});
+}
+function removeStaff(id){ST=ST.filter(s=>s.id!==id);renderStaff();}
+function renderStaff(){
+  const z=document.getElementById('staff-zone');
+  document.getElementById('staff-count').textContent=ST.length+' staff';
+  if(!ST.length){z.innerHTML='<div class="empty"><div class="empty-icon">👷</div>No staff added yet.</div>';return;}
+  const sl={morning:'Morning',evening:'Evening',fullday:'Full day'};
+  z.innerHTML=ST.map(s=>`<div class="staff-row">
+    <div class="av ${avc(s.name)}">${ini(s.name)}</div>
+    <div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--t1)">${s.name}</div><div style="font-size:11px;color:var(--t3)">${s.role}${s.phone?' · '+s.phone:''}</div></div>
+    <span class="badge shift-badge ${s.shift}">${sl[s.shift]||s.shift}</span>
+    <button class="btn btn-sm btn-red" onclick="removeStaff('${s.id}')">Remove</button>
+  </div>`).join('');
+}
+
+/* ══ REPORTS (TC_013, TC_015) ══ */
+function renderReports(){
+  document.getElementById('r-checkins').textContent=totToday;
+  document.getElementById('r-rev').textContent=rupee(totRev);
+  document.getElementById('r-members').textContent=M.length;
+  document.getElementById('r-coaching').textContent=C.length;
+  const rb=document.getElementById('rev-breakdown');
+  /* TC_013: fixed — match correct type strings */
+  const wR=P.filter(p=>p.type==='Session'&&p.status==='paid').reduce((a,p)=>a+p.amount,0);
+  const mR=P.filter(p=>p.type.startsWith('Membership')&&p.status==='paid').reduce((a,p)=>a+p.amount,0);
+  const cR=P.filter(p=>p.type.startsWith('Coaching')&&p.status==='paid').reduce((a,p)=>a+p.amount,0);
+  /* TC_015: pending shown clearly */
+  const pR=P.filter(p=>p.status==='pending').reduce((a,p)=>a+p.amount,0);
+  const pendList=P.filter(p=>p.status==='pending');
+  if(!P.length){rb.innerHTML='<div class="empty">No data yet.</div>';return;}
+  rb.innerHTML=`<div style="display:flex;flex-direction:column;gap:6px">
+    <div class="pay-row"><div style="font-size:13px;color:var(--t2)">Walk-in sessions</div><div class="pay-amt" style="color:var(--green)">${rupee(wR)}</div></div>
+    <div class="pay-row"><div style="font-size:13px;color:var(--t2)">Memberships</div><div class="pay-amt" style="color:var(--green)">${rupee(mR)}</div></div>
+    <div class="pay-row"><div style="font-size:13px;color:var(--t2)">Coaching fees</div><div class="pay-amt" style="color:var(--green)">${rupee(cR)}</div></div>
+    <div class="divider"></div>
+    <div class="pay-row"><div style="font-size:13px;font-weight:700;color:var(--t1)">Total collected</div><div class="pay-amt" style="font-size:16px">${rupee(wR+mR+cR)}</div></div>
+    ${pR?`<div class="pay-row" style="border-color:rgba(217,119,6,.3);background:var(--amber-bg)">
+      <div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--amber)">Pending dues (${pendList.length} customers)</div>
+      ${pendList.map(p=>`<div style="font-size:11px;color:var(--t3)">${p.name} — ${rupee(p.amount)}</div>`).join('')}
+      </div>
+      <div class="pay-amt" style="color:var(--amber)">${rupee(pR)}</div>
+    </div>`:''}
+  </div>`;
+  const fl=document.getElementById('full-log');
+  const all=[...S.map(s=>({...s,live:true})),...H];
+  if(!all.length){fl.innerHTML='<div class="empty">No sessions yet.</div>';return;}
+  fl.innerHTML=all.map(s=>`<div class="pay-row">
+    <div class="av ${avc(s.name)}" style="width:30px;height:30px;font-size:10px">${ini(s.name)}</div>
+    <div><div style="font-size:13px;color:var(--t1);font-weight:500">${s.name}</div><div style="font-size:11px;color:var(--t3)">${fmtTime(s.start)} · ${s.dur} min</div></div>
+    ${s.live?'<span class="badge active">Live</span>':'<span class="badge done">Done</span>'}
+    <div class="pay-amt" style="font-size:13px">${rupee(s.price)}</div>
+  </div>`).join('');
+}
+
+/* ══ ALARM + AUDIO (mobile fix) ══ */
+let alreadyAlarmed=new Set(),_alarmActive=false;
+
+function triggerAlarm(sessions){
+  _alarmActive=true;
+  startAlarmLoop();
+  const allExp=S.filter(s=>alreadyAlarmed.has(s.id));
+  document.getElementById('alarm-msg').textContent=allExp.map(s=>s.sticker?`Cap ${s.sticker} (${s.name}) — time up`:`${s.name} — time up`).join(' · ');
+  document.getElementById('alarm-banner').classList.add('show');
+}
+function stopAlarm(){
+  _alarmActive=false;
+  stopAlarmSound();
+  document.getElementById('alarm-banner').classList.remove('show');
+  alreadyAlarmed.clear();
+}
+function extendSession(id,mins){
+  const s=S.find(x=>x.id===id);if(!s)return;
+  s.end+=mins*60000;s.dur+=mins;alreadyAlarmed.delete(id);
+  if(![...alreadyAlarmed].some(aid=>S.find(x=>x.id===aid)))stopAlarm();
+  else document.getElementById('alarm-msg').textContent=S.filter(x=>alreadyAlarmed.has(x.id)).map(x=>x.sticker?`Cap ${x.sticker} — time up`:`${x.name} — time up`).join(' · ');
+  _sb.from('sessions').update({end_time:new Date(s.end).toISOString(),duration:s.dur}).eq('id',id).then(()=>{});
+  renderSessions();
+}
+
+/* ══ TICK ══ */
+setInterval(()=>{
+  if(!S.length)return;
+  let rebuild=false,newExp=[];
+  S.forEach(s=>{
+    const rem=s.end-Date.now();
+    const el=document.getElementById('tm-'+s.id);
+    if(el){el.textContent=fmtT(rem);el.className='timer '+(rem<=0?'over':rem<5*60000?'warn':'ok');}
+    if(rem<=0&&!alreadyAlarmed.has(s.id)){alreadyAlarmed.add(s.id);newExp.push(s);rebuild=true;}
+    if(rem<=0||rem<5*60000)rebuild=true;
+  });
+  if(newExp.length)triggerAlarm(newExp);
+  if(rebuild)renderSessions();
+},1000);
+
+/* ══ FLATPICKR INIT ══ */
+/* Common config for all date pickers */
+const fpBase={
+  disableMobile:false,
+  monthSelectorType:'dropdown',
+  animate:true,
+};
+
+/* DOB picker — goes back up to 100 years */
+flatpickr('#m-dob',{...fpBase,
+  dateFormat:'d M Y',
+  maxDate:'today',
+  defaultDate:null,
+});
+
+/* Member start date */
+const fpMDate=flatpickr('#m-date',{...fpBase,
+  dateFormat:'Y-m-d',
+  defaultDate:'today',
+  altInput:true,
+  altFormat:'d M Y',
+});
+
+/* Coaching datetime */
+const fpCodt=flatpickr('#co-dt',{...fpBase,
+  enableTime:true,
+  dateFormat:'Y-m-d H:i',
+  defaultDate:new Date(),
+  altInput:true,
+  altFormat:'d M Y, h:i K',
+  minuteIncrement:15,
+});
+
+/* Booking date */
+const fpBkDate=flatpickr('#bk-date',{...fpBase,
+  dateFormat:'Y-m-d',
+  defaultDate:'today',
+  altInput:true,
+  altFormat:'d M Y',
+  onChange:function(selectedDates,dateStr){
+    /* update slot grid when date changes */
+    renderSlots();
+  }
+});
+
+/* ── helper: get booking date value ── */
+function getBkDate(){
+  const el=document.getElementById('bk-date');
+  return el._flatpickr ? el._flatpickr.input.value : el.value;
+}
+
+renderSlots();
+</script>
+</body>
+</html>
